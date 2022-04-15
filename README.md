@@ -1,7 +1,11 @@
+[![](https://data.jsdelivr.com/v1/package/npm/@paltis/lite-youtube/badge)](https://www.jsdelivr.com/package/npm/@paltis/lite-youtube)
+
 [![](https://data.jsdelivr.com/v1/package/gh/paltis5212/lite-youtube/badge)](https://www.jsdelivr.com/package/gh/paltis5212/lite-youtube)
 
 # lite-youtube
 > The fastest little YouTube web component on this side of the internet. The shadow dom web component version of justinribeiro's [lite-youtube](https://github.com/justinribeiro/lite-youtube).
+
+**Now following the original version up to 1.3.1**
 
 ## Features
 
@@ -40,7 +44,7 @@ import '@paltis/lite-youtube';
 If you want the paste-and-go version, you can simply load it via CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/paltis5212/lite-youtube@0.0.1/lite-youtube.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/paltis5212/lite-youtube@1.3.1/lite-youtube.min.js"></script>
 ```
 
 ## Basic Usage

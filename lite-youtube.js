@@ -1,32 +1,73 @@
 /**
 thanks https://github.com/justinribeiro/lite-youtube
  */
- class LiteYTEmbed extends HTMLElement {
-    constructor() {
-      super();
-      this.__iframeLoaded = false;
-      this.__setupDom();
-    }
-  
-    static get observedAttributes() {
-      return ['videoid'];
-    }
-  
-    connectedCallback() {
-      this.addEventListener('pointerover', LiteYTEmbed.warmConnections, {
-        once: true,
-      });
-  
-      this.addEventListener('click', e => this.__addIframe());
-    }
-  
-    /**
-     * Define our shadowDOM for the component
-     * @private
-     */
-    __setupDom() {
-      const shadowDom = this.attachShadow({mode: 'open'});
-      shadowDom.innerHTML = `
+export class LiteYTEmbed extends HTMLElement {
+  constructor() {
+    super();
+    this.isIframeLoaded = false;
+    this.setupDom();
+  }
+
+  static get observedAttributes() {
+    return ['videoid', 'playlistid'];
+  }
+
+  connectedCallback() {
+    this.addEventListener('pointerover', LiteYTEmbed.warmConnections, {
+      once: true,
+    });
+
+    this.addEventListener('click', () => this.addIframe());
+  }
+  get videoId() {
+    return encodeURIComponent(this.getAttribute('videoid') || '');
+  }
+  set videoId(id) {
+    this.setAttribute('videoid', id);
+  }
+  get playlistId() {
+    return encodeURIComponent(this.getAttribute('playlistid') || '');
+  }
+  set playlistId(id) {
+    this.setAttribute('playlistid', id);
+  }
+  get videoTitle() {
+    return this.getAttribute('videotitle') || 'Video';
+  }
+  set videoTitle(title) {
+    this.setAttribute('videotitle', title);
+  }
+  get videoPlay() {
+    return this.getAttribute('videoPlay') || 'Play';
+  }
+  set videoPlay(name) {
+    this.setAttribute('videoPlay', name);
+  }
+  get videoStartAt() {
+    return Number(this.getAttribute('videoStartAt') || '0');
+  }
+  set videoStartAt(time) {
+    this.setAttribute('videoStartAt', String(time));
+  }
+  get autoLoad() {
+    return this.hasAttribute('autoload');
+  }
+  get noCookie() {
+    return this.hasAttribute('nocookie');
+  }
+  get posterQuality() {
+    return this.getAttribute('posterquality') || 'hqdefault';
+  }
+  get posterLoading() {
+    return this.getAttribute('posterloading') || 'lazy';
+  }
+  get params() {
+    return `start=${this.videoStartAt}&${this.getAttribute('params')}`;
+  }
+
+  setupDom() {
+    const shadowDom = this.attachShadow({ mode: 'open' });
+    shadowDom.innerHTML = `
         <style>
           :host {
             contain: content;
@@ -64,8 +105,7 @@ thanks https://github.com/justinribeiro/lite-youtube
             transition: all 0.2s cubic-bezier(0, 0, 0.2, 1);
             z-index: 1;
           }
-          /* play button */
-          .lty-playbtn {
+          #playButton {
             width: 68px;
             height: 48px;
             background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDY4IDQ4Ij48cGF0aCBzdHlsZT0iY3Vyc29yOiBwb2ludGVyOyIgZD0iTTY2LjUyLDcuNzRjLTAuNzgtMi45My0yLjQ5LTUuNDEtNS40Mi02LjE5QzU1Ljc5LC4xMywzNCwwLDM0LDBTMTIuMjEsLjEzLDYuOSwxLjU1IEMzLjk3LDIuMzMsMi4yNyw0LjgxLDEuNDgsNy43NEMwLjA2LDEzLjA1LDAsMjQsMCwyNHMwLjA2LDEwLjk1LDEuNDgsMTYuMjZjMC43OCwyLjkzLDIuNDksNS40MSw1LjQyLDYuMTkgQzEyLjIxLDQ3Ljg3LDM0LDQ4LDM0LDQ4czIxLjc5LTAuMTMsMjcuMS0xLjU1YzIuOTMtMC43OCw0LjY0LTMuMjYsNS40Mi02LjE5QzY3Ljk0LDM0Ljk1LDY4LDI0LDY4LDI0UzY3Ljk0LDEzLjA1LDY2LjUyLDcuNzR6IiBmaWxsPSIjZjAwIj48L3BhdGg+PHBhdGggZD0iTSA0NSwyNCAyNywxNCAyNywzNCIgZmlsbD0iI2ZmZiI+PC9wYXRoPjwvc3ZnPg==");
@@ -77,11 +117,11 @@ thanks https://github.com/justinribeiro/lite-youtube
             border: 0;
             cursor: pointer;
           }
-          #frame:hover .lty-playbtn {
+          #frame:hover > #playButton {
             filter: grayscale(0%);
             opacity: 1;
           }
-          .lty-playbtn {
+          #playButton {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -89,12 +129,12 @@ thanks https://github.com/justinribeiro/lite-youtube
           }
   
           /* Post-click styles */
-          .lyt-activated {
+          .activated {
             cursor: unset;
           }
   
-          #frame.lyt-activated::before,
-          .lyt-activated .lty-playbtn {
+          #frame.activated::before,
+          #frame.activated > #playButton {
             display: none;
           }
         </style>
@@ -104,178 +144,133 @@ thanks https://github.com/justinribeiro/lite-youtube
             <source id="jpegPlaceholder" type="image/jpeg">
             <img id="fallbackPlaceholder" referrerpolicy="origin">
           </picture>
-          <button class="lty-playbtn"></button>
+          <button id="playButton"></button>
         </div>
       `;
-      this.__domRefFrame = this.shadowRoot.querySelector('#frame');
-      this.__domRefImg = {
-        fallback: this.shadowRoot.querySelector('#fallbackPlaceholder'),
-        webp: this.shadowRoot.querySelector('#webpPlaceholder'),
-        jpeg: this.shadowRoot.querySelector('#jpegPlaceholder'),
-      };
-      this.__domRefPlayButton = this.shadowRoot.querySelector('.lty-playbtn');
-    }
-  
-    /**
-     * Parse our attributes and fire up some placeholders
-     * @private
-     */
-    __setupComponent() {
-      this.videoId = encodeURIComponent(this.getAttribute('videoid'));
-      this.videoTitle = this.getAttribute('videotitle') || 'Video';
-      this.videoPlay = this.getAttribute('videoplay') || 'Play';
-      this.videoStartAt = this.getAttribute('start') || 0;
-      this.autoLoad = this.getAttribute('autoload') === '' ? true : false;
-  
-      this.__initImagePlaceholder();
-  
-      this.__domRefPlayButton.setAttribute(
-        'aria-label',
-        `${this.videoPlay}: ${this.videoTitle}`,
-      );
-      this.setAttribute('title', `${this.videoPlay}: ${this.videoTitle}`);
-  
-      if (this.autoLoad) {
-        this.__initIntersectionObserver();
-      }
-    }
-  
-    /**
-     * Lifecycle method that we use to listen for attribute changes to period
-     * @param {*} name
-     * @param {*} oldVal
-     * @param {*} newVal
-     */
-    attributeChangedCallback(name, oldVal, newVal) {
-      switch (name) {
-        case 'videoid': {
-          if (oldVal !== newVal) {
-            this.__setupComponent();
-  
-            // if we have a previous iframe, remove it and the activated class
-            if (this.__domRefFrame.classList.contains('lyt-activated')) {
-              this.__domRefFrame.classList.remove('lyt-activated');
-              this.shadowRoot.querySelector('iframe').remove();
-            }
-          }
-          break;
-        }
-        default:
-          break;
-      }
-    }
-  
-    /**
-     * Inject the iframe into the component body
-     * @private
-     */
-    __addIframe() {
-      if (!this.__iframeLoaded) {
-        const iframeHTML = `
-  <iframe frameborder="0" scrolling="no" allowfullscreen="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" src="https://www.youtube.com/embed/${this.videoId}?autoplay=1&start=${this.videoStartAt}"></iframe>`;
-        this.__domRefFrame.insertAdjacentHTML('beforeend', iframeHTML);
-        this.__domRefFrame.classList.add('lyt-activated');
-        this.__iframeLoaded = true;
-      }
-    }
-  
-    /**
-     * Setup the placeholder image for the component
-     * @private
-     */
-    __initImagePlaceholder() {
-      // we don't know which image type to preload, so warm the connection
-      LiteYTEmbed.addPrefetch('preconnect', 'https://i.ytimg.com/');
-  
-      const posterUrlWebp = `https://i.ytimg.com/vi_webp/${this.videoId}/hqdefault.webp`;
-      const posterUrlJpeg = `https://i.ytimg.com/vi/${this.videoId}/hqdefault.jpg`;
-      this.__domRefImg.webp.srcset = posterUrlWebp;
-      this.__domRefImg.jpeg.srcset = posterUrlJpeg;
-      this.__domRefImg.fallback.src = posterUrlJpeg;
-      this.__domRefImg.fallback.setAttribute(
-        'aria-label',
-        `${this.videoPlay}: ${this.videoTitle}`,
-      );
-      this.__domRefImg.fallback.setAttribute(
-        'alt',
-        `${this.videoPlay}: ${this.videoTitle}`,
-      );
-    }
-  
-    /**
-     * Setup the Intersection Observer to load the iframe when scrolled into view
-     * @private
-     */
-    __initIntersectionObserver() {
-      if (
-        'IntersectionObserver' in window &&
-        'IntersectionObserverEntry' in window
-      ) {
-        const options = {
-          root: null,
-          rootMargin: '0px',
-          threshold: 0,
-        };
-  
-        const observer = new IntersectionObserver((entries, observer) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting && !this.__iframeLoaded) {
-              LiteYTEmbed.warmConnections();
-              this.__addIframe();
-              observer.unobserve(this);
-            }
-          });
-        }, options);
-  
-        observer.observe(this);
-      }
-    }
-  
-    /**
-     * Add a <link rel={preload | preconnect} ...> to the head
-     */
-    static addPrefetch(kind, url, as) {
-      const linkElem = document.createElement('link');
-      linkElem.rel = kind;
-      linkElem.href = url;
-      if (as) {
-        linkElem.as = as;
-      }
-      linkElem.crossorigin = true;
-      document.head.append(linkElem);
-    }
-  
-    /**
-     * Begin preconnecting to warm up the iframe load Since the embed's netwok
-     * requests load within its iframe, preload/prefetch'ing them outside the
-     * iframe will only cause double-downloads. So, the best we can do is warm up
-     * a few connections to origins that are in the critical path.
-     *
-     * Maybe `<link rel=preload as=document>` would work, but it's unsupported:
-     * http://crbug.com/593267 But TBH, I don't think it'll happen soon with Site
-     * Isolation and split caches adding serious complexity.
-     */
-    static warmConnections() {
-      if (LiteYTEmbed.preconnected) return;
-      // Host that YT uses to serve JS needed by player, per amp-youtube
-      LiteYTEmbed.addPrefetch('preconnect', 'https://s.ytimg.com');
-  
-      // The iframe document and most of its subresources come right off
-      // youtube.com
-      LiteYTEmbed.addPrefetch('preconnect', 'https://www.youtube.com');
-  
-      // The botguard script is fetched off from google.com
-      LiteYTEmbed.addPrefetch('preconnect', 'https://www.google.com');
-  
-      // TODO: Not certain if these ad related domains are in the critical path.
-      // Could verify with domain-specific throttling.
-      LiteYTEmbed.addPrefetch(
-        'preconnect',
-        'https://googleads.g.doubleclick.net',
-      );
-      LiteYTEmbed.addPrefetch('preconnect', 'https://static.doubleclick.net');
-      LiteYTEmbed.preconnected = true;
+    this.domRefFrame = shadowDom.querySelector('#frame');
+    this.domRefImg = {
+      fallback: shadowDom.querySelector('#fallbackPlaceholder'),
+      webp: shadowDom.querySelector('#webpPlaceholder'),
+      jpeg: shadowDom.querySelector('#jpegPlaceholder'),
+    };
+    this.domRefPlayButton = shadowDom.querySelector('#playButton');
+  }
+
+  setupComponent() {
+    this.initImagePlaceholder();
+    this.domRefPlayButton.setAttribute('aria-label', `${this.videoPlay}: ${this.videoTitle}`);
+    this.setAttribute('title', `${this.videoPlay}: ${this.videoTitle}`);
+    if (this.autoLoad) {
+      this.initIntersectionObserver();
     }
   }
-  // Register custom element
-  customElements.define('lite-youtube', LiteYTEmbed);
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    switch (name) {
+      case 'videoid':
+      case 'playlistid': {
+        if (oldVal !== newVal) {
+          this.setupComponent();
+
+          // if we have a previous iframe, remove it and the activated class
+          if (this.domRefFrame.classList.contains('activated')) {
+            this.domRefFrame.classList.remove('activated');
+            this.shadowRoot.querySelector('iframe').remove();
+            this.isIframeLoaded = false;
+          }
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  addIframe(isIntersectionObserver = false) {
+    if (!this.isIframeLoaded) {
+      const autoplay = isIntersectionObserver ? 0 : 1;
+      const wantsNoCookie = this.noCookie ? '-nocookie' : '';
+      let embedTarget;
+      if (this.playlistId) {
+        embedTarget = `?listType=playlist&list=${this.playlistId}&`;
+      }
+      else {
+        embedTarget = `${this.videoId}?`;
+      }
+      const iframeHTML = `
+        <iframe frameborder="0"
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen
+        src="https://www.youtube${wantsNoCookie}.com/embed/${embedTarget}autoplay=${autoplay}&${this.params}"
+      ></iframe>`;
+      this.domRefFrame.insertAdjacentHTML('beforeend', iframeHTML);
+      this.domRefFrame.classList.add('activated');
+      this.isIframeLoaded = true;
+      this.dispatchEvent(new CustomEvent('liteYoutubeIframeLoaded', {
+        detail: {
+          videoId: this.videoId,
+        },
+        bubbles: true,
+        cancelable: true,
+      }));
+    }
+  }
+
+  initImagePlaceholder() {
+    LiteYTEmbed.addPrefetch('preconnect', 'https://i.ytimg.com/');
+    const posterUrlWebp = `https://i.ytimg.com/vi_webp/${this.videoId}/${this.posterQuality}.webp`;
+    const posterUrlJpeg = `https://i.ytimg.com/vi/${this.videoId}/${this.posterQuality}.jpg`;
+    this.domRefImg.fallback.loading = this.posterLoading;
+    this.domRefImg.webp.srcset = posterUrlWebp;
+    this.domRefImg.jpeg.srcset = posterUrlJpeg;
+    this.domRefImg.fallback.src = posterUrlJpeg;
+    this.domRefImg.fallback.setAttribute('aria-label', `${this.videoPlay}: ${this.videoTitle}`);
+    this.domRefImg?.fallback?.setAttribute('alt', `${this.videoPlay}: ${this.videoTitle}`);
+  }
+
+
+  initIntersectionObserver() {
+
+    const options = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0,
+    };
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !this.isIframeLoaded) {
+          LiteYTEmbed.warmConnections();
+          this.addIframe(true);
+          observer.unobserve(this);
+        }
+      });
+    }, options);
+    observer.observe(this);
+  }
+
+  static addPrefetch(kind, url, as) {
+    const linkElem = document.createElement('link');
+    linkElem.rel = kind;
+    linkElem.href = url;
+    if (as) {
+      linkElem.as = as;
+    }
+    linkElem.crossOrigin = 'true';
+    document.head.append(linkElem);
+  }
+
+  static warmConnections() {
+    if (LiteYTEmbed.isPreconnected) return;
+    LiteYTEmbed.addPrefetch('preconnect', 'https://s.ytimg.com');
+
+    LiteYTEmbed.addPrefetch('preconnect', 'https://www.youtube.com');
+
+    LiteYTEmbed.addPrefetch('preconnect', 'https://www.google.com');
+
+    LiteYTEmbed.addPrefetch('preconnect', 'https://googleads.g.doubleclick.net');
+    LiteYTEmbed.addPrefetch('preconnect', 'https://static.doubleclick.net');
+    LiteYTEmbed.isPreconnected = true;
+  }
+}
+LiteYTEmbed.isPreconnected = false;
+
+customElements.define('lite-youtube', LiteYTEmbed);
