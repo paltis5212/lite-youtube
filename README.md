@@ -40,7 +40,7 @@ import '@paltis/lite-youtube';
 If you want the paste-and-go version, you can simply load it via CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/paltis5212/lite-youtube@publish/lite-youtube.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/paltis5212/lite-youtube@0.0.1/lite-youtube.min.js"></script>
 ```
 
 ## Basic Usage
