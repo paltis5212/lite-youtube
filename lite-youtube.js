@@ -68,7 +68,7 @@ thanks https://github.com/justinribeiro/lite-youtube
           .lty-playbtn {
             width: 68px;
             height: 48px;
-            background-image: url(https://cdn.jsdelivr.net/gh/paltis5212/lite-youtube/lty-playbtn.svg);
+            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDY4IDQ4Ij48cGF0aCBzdHlsZT0iY3Vyc29yOiBwb2ludGVyOyIgZD0iTTY2LjUyLDcuNzRjLTAuNzgtMi45My0yLjQ5LTUuNDEtNS40Mi02LjE5QzU1Ljc5LC4xMywzNCwwLDM0LDBTMTIuMjEsLjEzLDYuOSwxLjU1IEMzLjk3LDIuMzMsMi4yNyw0LjgxLDEuNDgsNy43NEMwLjA2LDEzLjA1LDAsMjQsMCwyNHMwLjA2LDEwLjk1LDEuNDgsMTYuMjZjMC43OCwyLjkzLDIuNDksNS40MSw1LjQyLDYuMTkgQzEyLjIxLDQ3Ljg3LDM0LDQ4LDM0LDQ4czIxLjc5LTAuMTMsMjcuMS0xLjU1YzIuOTMtMC43OCw0LjY0LTMuMjYsNS40Mi02LjE5QzY3Ljk0LDM0Ljk1LDY4LDI0LDY4LDI0UzY3Ljk0LDEzLjA1LDY2LjUyLDcuNzR6IiBmaWxsPSIjZjAwIj48L3BhdGg+PHBhdGggZD0iTSA0NSwyNCAyNywxNCAyNywzNCIgZmlsbD0iI2ZmZiI+PC9wYXRoPjwvc3ZnPg==");
             background-color: transparent;
             filter: grayscale(100%);
             z-index: 1;

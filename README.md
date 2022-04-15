@@ -18,7 +18,7 @@
 - _new in v1.2_: Adds `playlistid` for playlist loading interface support
 - _new in v1.3_: Adds `loading=lazy` to image placeholder for more perf with `posterloading` attr if you'd like to use eager
 
-<!-- ## Install
+## Install
 
 This web component is built with ES modules in mind and is
 available on NPM:
@@ -33,14 +33,14 @@ After install, import into your project:
 
 ```js
 import '@paltis/lite-youtube';
-``` -->
+```
 
 ## Install with CDN
 
 If you want the paste-and-go version, you can simply load it via CDN:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/paltis5212/lite-youtube/lite-youtube.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/paltis5212/lite-youtube@publish/lite-youtube.min.js"></script>
 ```
 
 ## Basic Usage
